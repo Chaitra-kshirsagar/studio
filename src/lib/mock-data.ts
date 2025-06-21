@@ -1,4 +1,4 @@
-import type { Event, UserProfile } from "./types";
+import type { Event } from "./types";
 
 export const allEvents: Event[] = [
   {
@@ -86,18 +86,3 @@ export const allEvents: Event[] = [
     maxParticipants: 50,
   },
 ];
-
-export const userProfile: UserProfile = {
-  id: "user-123",
-  name: "Anya Sharma",
-  email: "anya.sharma@example.com",
-  avatarUrl: "https://placehold.co/100x100",
-  skills: ["JavaScript", "Teaching", "Teamwork", "First Aid"],
-  interests: ["Education", "Technology", "Healthcare"],
-  volunteerHours: 128,
-  pastEvents: [
-    { id: "p1", name: "Blood Donation Camp", date: "2023-11-20" },
-    { id: "p2", name: "River Cleanup", date: "2024-01-15" },
-    { id: "p3", name: "Winter Clothes Drive", date: "2024-02-10" },
-  ],
-};

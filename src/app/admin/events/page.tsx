@@ -1,3 +1,6 @@
+'use client';
+
+import RoleProtectedRoute from '@/components/RoleProtectedRoute';
 import { allEvents } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +28,7 @@ import {
 import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 
-export default function AdminEventsPage() {
+function AdminEventsPageContent() {
   return (
     <div className="bg-muted/40 min-h-screen">
       <div className="container mx-auto py-8 md:py-12 px-4">
@@ -102,4 +105,12 @@ export default function AdminEventsPage() {
       </div>
     </div>
   );
+}
+
+export default function AdminEventsPage() {
+  return (
+    <RoleProtectedRoute allowedRoles={['event_admin', 'super_admin']}>
+      <AdminEventsPageContent />
+    </RoleProtectedRoute>
+  )
 }

@@ -42,8 +42,8 @@ export default function SuggestedEventsDialog({
         setSuggestions([]);
 
         const result = await getSuggestedEvents({
-          volunteerSkills: volunteerProfile.skills,
-          volunteerInterests: volunteerProfile.interests,
+          volunteerSkills: volunteerProfile.skills || [],
+          volunteerInterests: volunteerProfile.interests || [],
           upcomingEvents: upcomingEvents.map(
             ({ name, description, category, date, location, requiredSkills }) => ({
               eventName: name,

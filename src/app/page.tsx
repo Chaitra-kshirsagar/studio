@@ -10,17 +10,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Sparkles, Filter } from "lucide-react";
+import { Search, Sparkles, Filter, LogIn } from "lucide-react";
 import EventCard from "@/components/event-card";
-import { allEvents, userProfile } from "@/lib/mock-data";
-import type { Event } from "@/lib/types";
+import { allEvents } from "@/lib/mock-data";
 import SuggestedEventsDialog from "@/components/suggested-events-dialog";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const filteredEvents = useMemo(() => {
     return allEvents.filter((event) => {
@@ -39,6 +45,21 @@ export default function Home() {
     []
   );
 
+  const handleGetSuggestions = () => {
+    if (user) {
+      setIsSuggesting(true);
+    } else {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to get AI suggestions.",
+        action: (
+          <Button onClick={() => router.push('/login')}><LogIn className="mr-2 h-4 w-4" />Login</Button>
+        ),
+      });
+    }
+  };
+
+
   return (
     <>
       <div className="w-full bg-card shadow-sm">
@@ -52,7 +73,7 @@ export default function Home() {
               and passion. Join Bhumi and be the change.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => setIsSuggesting(true)}>
+              <Button size="lg" onClick={handleGetSuggestions}>
                 <Sparkles className="mr-2" /> Get AI Suggestions
               </Button>
             </div>
@@ -106,12 +127,14 @@ export default function Home() {
         )}
       </div>
 
-      <SuggestedEventsDialog
-        open={isSuggesting}
-        onOpenChange={setIsSuggesting}
-        volunteerProfile={userProfile}
-        upcomingEvents={allEvents}
-      />
+      {user && (
+        <SuggestedEventsDialog
+            open={isSuggesting}
+            onOpenChange={setIsSuggesting}
+            volunteerProfile={user}
+            upcomingEvents={allEvents}
+        />
+      )}
     </>
   );
 }

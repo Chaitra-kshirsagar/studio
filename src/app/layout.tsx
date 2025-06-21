@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/toaster";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import { AuthProvider } from "@/context/AuthContext";
+import AppContent from "@/components/AppContent";
 
 export const metadata: Metadata = {
   title: "Bhumi Connect",
@@ -31,13 +30,14 @@ export default function RootLayout({
       </head>
       <body
         className={cn(
-          "min-h-screen bg-background font-body antialiased flex flex-col"
+          "min-h-screen bg-background font-body antialiased"
         )}
       >
-        <Header />
-        <main className="flex-grow">{children}</main>
-        <Footer />
-        <Toaster />
+        <AuthProvider>
+          <AppContent>
+            {children}
+          </AppContent>
+        </AuthProvider>
       </body>
     </html>
   );

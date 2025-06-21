@@ -13,12 +13,14 @@ export type Event = {
 };
 
 export type UserProfile = {
-  id: string;
+  uid: string;
   name: string;
   email: string;
   avatarUrl: string;
-  skills: string[];
-  interests: string[];
-  volunteerHours: number;
-  pastEvents: Pick<Event, "id" | "name" | "date">[];
+  role: 'volunteer' | 'event_admin' | 'super_admin';
+  skills?: string[];
+  interests?: string[];
+  volunteerHours?: number;
+  pastEvents?: Pick<Event, "id" | "name" | "date">[];
+  createdAt?: any; // Should be Firestore Timestamp
 };
