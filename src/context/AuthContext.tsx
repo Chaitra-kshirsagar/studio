@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleAuthProvider } from '@/firebase/clientApp';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/lib/types';
@@ -23,32 +23,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const handleUser = async (rawUser: FirebaseUser | null) => {
-        if (rawUser) {
-            setFirebaseUser(rawUser);
-            const userRef = doc(db, 'users', rawUser.uid);
-            const userSnap = await getDoc(userRef);
+    useEffect(() => {
+        const unsubscribeAuth = onAuthStateChanged(auth, async (rawUser) => {
+            if (rawUser) {
+                setFirebaseUser(rawUser);
+                const userRef = doc(db, 'users', rawUser.uid);
+                
+                const unsubscribeSnapshot = onSnapshot(userRef, async (userSnap) => {
+                    if (userSnap.exists()) {
+                        setUser(userSnap.data() as UserProfile);
+                    } else {
+                        // New user, create a document
+                        const newUserProfile: UserProfile = {
+                            uid: rawUser.uid,
+                            email: rawUser.email || '',
+                            name: rawUser.displayName || 'New User',
+                            avatarUrl: rawUser.photoURL || `https://placehold.co/100x100.png`,
+                            role: 'volunteer', // default role
+                            registeredEventIds: [],
+                            skills: [],
+                            interests: [],
+                            pastEvents: [],
+                            volunteerHours: 0,
+                            createdAt: serverTimestamp()
+                        };
+                        await setDoc(userRef, newUserProfile);
+                        setUser(newUserProfile);
+                    }
+                    setLoading(false);
+                });
 
-            if (userSnap.exists()) {
-                setUser(userSnap.data() as UserProfile);
+                return () => unsubscribeSnapshot();
             } else {
-                // New user, create a document
-                const newUserProfile: Omit<UserProfile, 'skills' | 'interests' | 'volunteerHours' | 'pastEvents'> = {
-                    uid: rawUser.uid,
-                    email: rawUser.email || '',
-                    name: rawUser.displayName || 'New User',
-                    avatarUrl: rawUser.photoURL || `https://placehold.co/100x100.png`,
-                    role: 'volunteer', // default role
-                };
-                await setDoc(userRef, { ...newUserProfile, createdAt: serverTimestamp() });
-                setUser(newUserProfile as UserProfile);
+                setFirebaseUser(null);
+                setUser(null);
+                setLoading(false);
             }
-        } else {
-            setFirebaseUser(null);
-            setUser(null);
-        }
-        setLoading(false);
-    };
+        });
+
+        return () => unsubscribeAuth();
+    }, []);
+
 
     const signInWithGoogle = async () => {
         try {
@@ -64,11 +79,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setFirebaseUser(null);
         router.push('/');
     };
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, handleUser);
-        return () => unsubscribe();
-    }, []);
 
     const value = {
         user,

@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { db } from "@/firebase/clientApp";
+import type { Event } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,23 +13,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Sparkles, Filter, LogIn } from "lucide-react";
+import { Search, Sparkles, Filter, LogIn, Loader2 } from "lucide-react";
 import EventCard from "@/components/event-card";
-import { allEvents } from "@/lib/mock-data";
 import SuggestedEventsDialog from "@/components/suggested-events-dialog";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function Home() {
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const eventsCollection = collection(db, 'events');
+        const q = query(
+          eventsCollection, 
+          where('visibility', '==', 'public'), 
+          orderBy('date', 'asc'),
+          where('date', '>', new Date().toISOString())
+        );
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedEvents = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            const eventDate = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+            return { 
+                id: doc.id,
+                ...data,
+                date: eventDate.toISOString(),
+            } as Event
+        });
+        
+        setAllEvents(fetchedEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch events.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [toast]);
 
   const filteredEvents = useMemo(() => {
     return allEvents.filter((event) => {
@@ -38,11 +82,11 @@ export default function Home() {
         event.location.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, category]);
+  }, [searchQuery, category, allEvents]);
 
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(allEvents.map((e) => e.category)))],
-    []
+    [allEvents]
   );
 
   const handleGetSuggestions = () => {
@@ -59,6 +103,21 @@ export default function Home() {
     }
   };
 
+  const renderEventSkeletons = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {[...Array(3)].map((_, i) => (
+        <Card key={i}>
+          <Skeleton className="h-48 w-full" />
+          <div className="p-6 space-y-3">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-10 w-full mt-2" />
+          </div>
+        </Card>
+      ))}
+    </div>
+  )
 
   return (
     <>
@@ -111,7 +170,9 @@ export default function Home() {
           </div>
         </Card>
 
-        {filteredEvents.length > 0 ? (
+        {loading ? (
+          renderEventSkeletons()
+        ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredEvents.map((event) => (
               <EventCard key={event.id} event={event} />
@@ -119,9 +180,9 @@ export default function Home() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold">No Events Found</h2>
+            <h2 className="text-2xl font-semibold">No Upcoming Events Found</h2>
             <p className="text-muted-foreground mt-2">
-              Try adjusting your search or filters.
+              Please check back later for new opportunities.
             </p>
           </div>
         )}

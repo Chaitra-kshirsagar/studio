@@ -35,7 +35,7 @@ export default function SuggestedEventsDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
+    if (open && upcomingEvents.length > 0) {
       const fetchSuggestions = async () => {
         setIsLoading(true);
         setError(null);
