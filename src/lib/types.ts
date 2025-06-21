@@ -10,6 +10,10 @@ export type Event = {
   imageHint: string;
   participants: number;
   maxParticipants: number;
+  visibility?: 'public' | 'private';
+  groupId?: string;
+  createdBy?: string;
+  createdAt?: any; // Should be Firestore Timestamp
 };
 
 export type UserProfile = {

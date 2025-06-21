@@ -1,7 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import RoleProtectedRoute from '@/components/RoleProtectedRoute';
-import { allEvents } from "@/lib/mock-data";
+import { db } from '@/firebase/clientApp';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import type { Event } from '@/lib/types';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,10 +28,48 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from '@/hooks/use-toast';
 
 function AdminEventsPageContent() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const eventsCollection = collection(db, 'events');
+        const q = query(eventsCollection, orderBy('date', 'desc'));
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedEvents = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            const eventDate = data.date?.toDate ? data.date.toDate() : new Date(data.date);
+            return { 
+                id: doc.id,
+                ...data,
+                date: eventDate.toISOString(),
+            } as Event
+        });
+        
+        setEvents(fetchedEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch events.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
   return (
     <div className="bg-muted/40 min-h-screen">
       <div className="container mx-auto py-8 md:py-12 px-4">
@@ -44,13 +85,18 @@ function AdminEventsPageContent() {
                 </CardDescription>
               </div>
               <Button asChild>
-                <Link href="#">
+                <Link href="/admin/events/create">
                   <PlusCircle className="mr-2" /> Create New Event
                 </Link>
               </Button>
             </div>
           </CardHeader>
           <CardContent>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
             <div className="border rounded-lg">
             <Table>
               <TableHeader>
@@ -66,7 +112,7 @@ function AdminEventsPageContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allEvents.map((event) => (
+                {events.map((event) => (
                   <TableRow key={event.id}>
                     <TableCell className="font-medium">{event.name}</TableCell>
                     <TableCell>
@@ -100,6 +146,13 @@ function AdminEventsPageContent() {
               </TableBody>
             </Table>
             </div>
+            )}
+            {!loading && events.length === 0 && (
+              <div className="text-center py-16 text-muted-foreground">
+                <p>No events found.</p>
+                <p>Click "Create New Event" to get started.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
