@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -82,6 +83,27 @@ export default function AdminEventsPage() {
 
     fetchEvents();
   }, [user, toast]);
+  
+  const ActionsMenu = ({ eventId }: { eventId: string }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button aria-haspopup="true" size="icon" variant="ghost">
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+              <Link href={`/admin/events/${eventId}/attendees`}><Users className="mr-2 h-4 w-4" />Manage Attendees</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+            <Trash2 className="mr-2 h-4 w-4" />Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+  );
 
   return (
     <Card>
@@ -108,59 +130,70 @@ export default function AdminEventsPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-        <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Event</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead className="text-center">Participants</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Desktop Table */}
+          <div className="border rounded-lg hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead className="text-center">Participants</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {events.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell className="font-medium">{event.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{event.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(event.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{event.location}</TableCell>
+                    <TableCell className="text-center">
+                      {event.participants} / {event.maxParticipants}
+                    </TableCell>
+                    <TableCell>
+                      <ActionsMenu eventId={event.id} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
             {events.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium">{event.name}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{event.category}</Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(event.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>{event.location}</TableCell>
-                <TableCell className="text-center">
-                  {event.participants} / {event.maxParticipants}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                          <Link href={`/admin/events/${event.id}/attendees`}><Users className="mr-2 h-4 w-4" />Manage Attendees</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                        <Trash2 className="mr-2 h-4 w-4" />Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+              <Card key={event.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>{event.name}</CardTitle>
+                      <CardDescription>{new Date(event.date).toLocaleDateString()}</CardDescription>
+                    </div>
+                    <ActionsMenu eventId={event.id} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                   <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="secondary">{event.category}</Badge>
+                   </div>
+                   <p className="text-sm text-muted-foreground">{event.location}</p>
+                   <p className="text-sm font-medium">
+                      {event.participants} / {event.maxParticipants} participants
+                   </p>
+                </CardContent>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-        </div>
+          </div>
+        </>
         )}
         {!loading && events.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">

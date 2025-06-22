@@ -27,6 +27,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 function UserManagementContent() {
     const [users, setUsers] = useState<UserProfile[]>([]);
@@ -74,6 +75,23 @@ function UserManagementContent() {
         }
     }
 
+    const RoleSelector = ({ user }: { user: UserProfile }) => (
+        <Select 
+            defaultValue={user.role} 
+            onValueChange={(value) => handleRoleChange(user.uid, value as UserProfile['role'])}
+            disabled={isPending}
+        >
+            <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select new role" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="volunteer">Volunteer</SelectItem>
+                <SelectItem value="event_admin">Event Admin</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+            </SelectContent>
+        </Select>
+    );
+
     return (
         <Card>
             <CardHeader>
@@ -84,53 +102,71 @@ function UserManagementContent() {
                 {loading ? (
                     <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                 ) : (
-                    <div className="border rounded-lg">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead className="text-center">Current Role</TableHead>
-                                    <TableHead className="text-right">Change Role</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {users.map(user => (
-                                    <TableRow key={user.uid}>
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8">
+                    <>
+                        {/* Desktop Table */}
+                        <div className="border rounded-lg hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>User</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead className="text-center">Current Role</TableHead>
+                                        <TableHead className="text-right">Change Role</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {users.map(user => (
+                                        <TableRow key={user.uid}>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                                                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span>{user.name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{user.email}</TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant={getRoleBadgeVariant(user.role)}>{user.role.replace('_', ' ')}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <RoleSelector user={user} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                         {/* Mobile Cards */}
+                        <div className="md:hidden space-y-4">
+                            {users.map(user => (
+                                <Card key={user.uid}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <Avatar className="h-10 w-10">
                                                     <AvatarImage src={user.avatarUrl} alt={user.name} />
                                                     <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <span>{user.name}</span>
+                                                <div>
+                                                    <CardTitle className="text-base">{user.name}</CardTitle>
+                                                    <CardDescription>{user.email}</CardDescription>
+                                                </div>
                                             </div>
-                                        </TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell className="text-center">
-                                            <Badge variant={getRoleBadgeVariant(user.role)}>{user.role.replace('_', ' ')}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Select 
-                                                defaultValue={user.role} 
-                                                onValueChange={(value) => handleRoleChange(user.uid, value as UserProfile['role'])}
-                                                disabled={isPending}
-                                            >
-                                                <SelectTrigger className="w-[180px] ml-auto">
-                                                    <SelectValue placeholder="Select new role" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="volunteer">Volunteer</SelectItem>
-                                                    <SelectItem value="event_admin">Event Admin</SelectItem>
-                                                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
+                                             <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">{user.role.replace('_', ' ')}</Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex flex-col space-y-2">
+                                            <Label>Change Role</Label>
+                                            <RoleSelector user={user} />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </>
                 )}
             </CardContent>
         </Card>

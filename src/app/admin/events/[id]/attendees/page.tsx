@@ -10,7 +10,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import type { Registration, Event, Certificate } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -109,7 +109,9 @@ export default function ManageAttendeesPage() {
                 </CardHeader>
                 <CardContent>
                     {registrations.length > 0 ? (
-                        <div className="border rounded-lg">
+                        <>
+                        {/* Desktop Table */}
+                        <div className="border rounded-lg hidden md:block">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -147,6 +149,38 @@ export default function ManageAttendeesPage() {
                                 </TableBody>
                             </Table>
                         </div>
+                        {/* Mobile Cards */}
+                        <div className="md:hidden space-y-4">
+                             {registrations.map(reg => {
+                                const certificate = certificates.get(reg.userId);
+                                return (
+                                <Card key={reg.id}>
+                                    <CardHeader>
+                                        <CardTitle>{reg.userName}</CardTitle>
+                                        <CardDescription>
+                                            <Badge variant={reg.status === 'registered' ? 'secondary' : 'outline'}>{reg.status}</Badge>
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-muted-foreground">T-Shirt Size: {reg.customFields?.tShirtSize || 'N/A'}</p>
+                                    </CardContent>
+                                    <CardFooter className="flex justify-end">
+                                         {certificate ? (
+                                            <Button variant="outline" size="sm" asChild>
+                                                <a href={certificate.fileUrl} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="mr-2" /> View
+                                                </a>
+                                            </Button>
+                                        ) : (
+                                            <Button size="sm" onClick={() => setSelectedRegistration(reg)}>
+                                                <UploadCloud className="mr-2" /> Upload
+                                            </Button>
+                                        )}
+                                    </CardFooter>
+                                </Card>
+                                )})}
+                        </div>
+                        </>
                     ) : (
                         <div className="text-center py-16 text-muted-foreground">
                             <p>No one has registered for this event yet.</p>
