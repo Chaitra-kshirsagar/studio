@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Flame, Menu, LogOut, UserCircle, Settings, LogIn } from "lucide-react";
+import { Flame, Menu, LogOut, UserCircle, Settings, LogIn, ShieldCheck } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,7 +38,7 @@ const NavLinks = ({ className, closeSheet }: { className?: string; closeSheet?: 
             My Profile
           </Link>
           {(user.role === 'event_admin' || user.role === 'super_admin') && (
-            <Link href="/admin/events" className="text-foreground/80 hover:text-foreground" onClick={handleLinkClick}>
+            <Link href="/admin" className="text-foreground/80 hover:text-foreground" onClick={handleLinkClick}>
               Admin
             </Link>
           )}
@@ -147,6 +147,14 @@ export default function Header() {
                     Profile
                   </Link>
                 </DropdownMenuItem>
+                 {(user.role === 'event_admin' || user.role === 'super_admin') && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Admin
+                        </Link>
+                    </DropdownMenuItem>
+                 )}
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
