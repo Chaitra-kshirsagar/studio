@@ -33,10 +33,20 @@ export type UserProfile = {
 export type Registration = {
   id: string;
   userId: string;
+  userName: string;
   eventId: string;
   status: 'registered' | 'waitlisted' | 'cancelled';
   createdAt: any; // Firestore Timestamp
   customFields?: {
       tShirtSize?: 'S' | 'M' | 'L' | 'XL' | 'XXL';
   };
+};
+
+export type Certificate = {
+  id: string;
+  userId: string;
+  eventId: string;
+  eventName: string;
+  fileUrl: string;
+  dateIssued: any; // Firestore Timestamp
 };

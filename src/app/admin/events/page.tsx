@@ -27,8 +27,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Pencil, Trash2, Loader2, Users } from "lucide-react";
 import Link from "next/link";
 import { toast } from '@/hooks/use-toast';
 
@@ -134,7 +135,11 @@ function AdminEventsPageContent() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                              <Link href={`/admin/events/${event.id}/attendees`}><Users className="mr-2 h-4 w-4" />Manage Attendees</Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
                             <Trash2 className="mr-2 h-4 w-4" />Delete
                           </DropdownMenuItem>

@@ -1,28 +1,59 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Award, BookOpen, Clock, Edit } from "lucide-react";
+import { Award, BookOpen, Clock, Edit, Linkedin, FileText, Download } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from "@/firebase/clientApp";
+import type { Certificate } from "@/lib/types";
 
 function ProfilePageContent() {
   const { user } = useAuth();
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loadingCerts, setLoadingCerts] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchCertificates = async () => {
+      setLoadingCerts(true);
+      try {
+        const certsCollection = collection(db, 'certificates');
+        const q = query(certsCollection, where('userId', '==', user.uid), orderBy('dateIssued', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const fetchedCerts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Certificate));
+        setCertificates(fetchedCerts);
+      } catch (error) {
+        console.error("Error fetching certificates:", error);
+      } finally {
+        setLoadingCerts(false);
+      }
+    };
+
+    fetchCertificates();
+  }, [user]);
 
   if (!user) return null;
 
   const userInitial = user.name?.charAt(0).toUpperCase() || "";
 
-  // These fields will be populated from your Firestore document.
-  // Using optional chaining and default values for robustness.
   const skills = user.skills || [];
   const interests = user.interests || [];
   const volunteerHours = user.volunteerHours || 0;
   const pastEvents = user.pastEvents || [];
+  
+  const handleLinkedInShare = (cert: Certificate) => {
+    const shareText = `I'm proud to have received this certificate for volunteering at the "${cert.eventName}" event with Bhumi! It was a great experience contributing to the community. #Bhumi #Volunteering #CommunityImpact`;
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(cert.fileUrl)}&title=${encodeURIComponent(`Certificate of Participation - ${cert.eventName}`)}&summary=${encodeURIComponent(shareText)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="bg-muted/40">
@@ -125,11 +156,41 @@ function ProfilePageContent() {
                 <CardTitle className="font-headline">My Certificates</CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="text-center text-muted-foreground py-8">
-                    <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50"/>
-                    <p>No certificates yet.</p>
-                    <p className="text-sm">Complete an event to earn a certificate.</p>
-                 </div>
+                 {loadingCerts ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Loading certificates...</p>
+                 ) : certificates.length > 0 ? (
+                     <ul className="space-y-4">
+                        {certificates.map((cert, index) => (
+                            <li key={cert.id}>
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-center">
+                                    <div className="mb-2 sm:mb-0">
+                                        <div className="font-semibold flex items-center gap-2">
+                                          <FileText className="h-4 w-4 text-secondary" /> {cert.eventName}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground ml-6">
+                                            Issued on {new Date(cert.dateIssued.toDate()).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2 self-end sm:self-center">
+                                        <Button variant="secondary" size="sm" asChild>
+                                            <a href={cert.fileUrl} target="_blank" rel="noopener noreferrer"><Download className="mr-2" /> Download</a>
+                                        </Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleLinkedInShare(cert)}>
+                                            <Linkedin className="mr-2" /> Share
+                                        </Button>
+                                    </div>
+                                </div>
+                                {index < certificates.length - 1 && <Separator className="mt-4" />}
+                            </li>
+                        ))}
+                    </ul>
+                 ) : (
+                    <div className="text-center text-muted-foreground py-8">
+                        <Award className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50"/>
+                        <p>No certificates yet.</p>
+                        <p className="text-sm">Complete an event to earn a certificate.</p>
+                    </div>
+                 )}
               </CardContent>
             </Card>
           </div>
@@ -138,7 +199,6 @@ function ProfilePageContent() {
     </div>
   );
 }
-
 
 export default function ProfilePage() {
   return (
