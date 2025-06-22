@@ -17,6 +17,8 @@ export type CreateEventFormData = {
     groupId?: string;
     imageUrl: string;
     createdBy: string;
+    customReminderMessage?: string;
+    postEventMessage?: string;
 };
 
 export async function createEventAction(data: CreateEventFormData) {

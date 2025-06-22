@@ -24,7 +24,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Loader2, UploadCloud } from 'lucide-react';
+import { CalendarIcon, Loader2, UploadCloud, MessageSquarePlus } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const eventFormSchema = z.object({
   name: z.string().min(3, { message: "Title must be at least 3 characters." }),
@@ -35,6 +36,8 @@ const eventFormSchema = z.object({
   maxParticipants: z.coerce.number().int().positive({ message: "Capacity must be a positive number." }),
   visibility: z.enum(['public', 'private'], { required_error: "Please select event visibility." }),
   groupId: z.string().optional(),
+  customReminderMessage: z.string().optional(),
+  postEventMessage: z.string().optional(),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -53,6 +56,8 @@ function CreateEventPageContent() {
     defaultValues: {
       visibility: 'public',
       groupId: '',
+      customReminderMessage: '',
+      postEventMessage: '',
     },
   });
 
@@ -204,6 +209,21 @@ function CreateEventPageContent() {
                 <FormField control={form.control} name="groupId" render={({ field }) => (
                   <FormItem><FormLabel>Group ID (Optional)</FormLabel><FormControl><Input placeholder="e.g., summer-cleanup-2024" {...field} /></FormControl><FormDescription>If this is part of a series of recurring events, enter a common group ID.</FormDescription><FormMessage /></FormItem>
                 )} />
+
+                <Separator />
+                
+                <div className="space-y-6">
+                    <div className="space-y-1">
+                        <h3 className="text-lg font-medium font-headline flex items-center"><MessageSquarePlus className="mr-2 h-5 w-5" />Automated Reminders (Optional)</h3>
+                        <p className="text-sm text-muted-foreground">Customize the messages sent to volunteers. Leave blank to use default messages.</p>
+                    </div>
+                    <FormField control={form.control} name="customReminderMessage" render={({ field }) => (
+                        <FormItem><FormLabel>Pre-Event Reminder Message</FormLabel><FormControl><Textarea placeholder="e.g., Hi [Volunteer Name], just a friendly reminder about the [Event Name] event tomorrow at [Time]. We can't wait to see you there!" {...field} rows={3} /></FormControl><FormDescription>This message will be sent 24 hours before the event.</FormDescription><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="postEventMessage" render={({ field }) => (
+                        <FormItem><FormLabel>Post-Event Follow-Up Message</FormLabel><FormControl><Textarea placeholder="e.g., Thank you for making the [Event Name] a success! We'd love to hear your feedback." {...field} rows={3} /></FormControl><FormDescription>This message will be sent about an hour after the event ends.</FormDescription><FormMessage /></FormItem>
+                    )} />
+                </div>
 
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

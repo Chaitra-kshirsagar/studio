@@ -14,6 +14,8 @@ export type Event = {
   groupId?: string;
   createdBy?: string;
   createdAt?: any; // Should be Firestore Timestamp
+  customReminderMessage?: string;
+  postEventMessage?: string;
 };
 
 export type UserProfile = {
